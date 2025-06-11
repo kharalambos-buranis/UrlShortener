@@ -9,6 +9,8 @@ namespace UrlShortener.API.Services
         Task<ShortUrl> GetUrlDetails(string shortCode, CancellationToken cancellationToken);
         Task UpdateUrl(string shortCode,UpdateUrlRequest request, CancellationToken cancellationToken);
         Task DeleteUrl(string shortCode, CancellationToken cancellationToken);
+        Task DeactivateUrlAsync(string shortCode);
         Task RecordClickAsync(string shortCode, string userAgent, string ipAddress);
+
     }
 }

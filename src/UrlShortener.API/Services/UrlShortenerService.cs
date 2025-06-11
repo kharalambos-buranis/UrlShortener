@@ -20,7 +20,7 @@ namespace UrlShortener.API.Services
 
         public async Task<ShortUrl> ShortenUrl(ShortenUrlRequest request, CancellationToken cancellationToken)
         {
-            var shortUrl = new ShortUrl
+            var shortUrl = new ShortUrl 
             {
                 ShortCode = GenerateShortCode(),
                 OriginalUrl = request.OriginalUrl,
@@ -35,11 +35,6 @@ namespace UrlShortener.API.Services
             return shortUrl;
         }
 
-        public async Task RecordClickAsync(string shortCode, string userAgent, string ipAddress)
-        {
-            await _cassandra.IncrementClickCounterAsync(shortCode);
-            await _cassandra.InsertAnalyticsRecordAsync(shortCode, DateTime.UtcNow, userAgent, ipAddress);
-        }
 
         public async Task<ShortUrl> GetUrlDetails(string shortCode, CancellationToken cancellationToken)
         {
@@ -53,13 +48,40 @@ namespace UrlShortener.API.Services
             return shortUrl;
         }
 
+        public async Task DeactivateUrlAsync(string shortCode)
+        {
+            await _repository.SetUrlInactiveAsync(shortCode);
+
+            throw new NotFoundException("This URL has expired");
+        }
+
+        public async Task RecordClickAsync(string shortCode, string userAgent, string ipAddress)
+        {
+            await _repository.IncrementClickCounterAsync(shortCode);
+            await _repository.InsertAnalyticsRecordAsync(shortCode, DateTime.UtcNow, userAgent, ipAddress);
+        }
+
         public async Task UpdateUrl(string shortCode,UpdateUrlRequest request, CancellationToken cancellationToken)
         {
+            var shortUrl = await _repository.GetSingle(shortCode, cancellationToken);
+
+            if (shortUrl is null)
+            {
+                throw new NotFoundException("The URL not found");
+            }
+
             await _repository.Update(shortCode, request, cancellationToken);
         }
 
         public Task DeleteUrl(string shortCode, CancellationToken cancellationToken)
         {
+            var shortUrl = _repository.GetSingle(shortCode, cancellationToken);
+
+            if (shortUrl is null)
+            {
+                throw new NotFoundException("The URL not found");
+            }
+
             return _repository.Delete(shortCode, cancellationToken);
         }
 

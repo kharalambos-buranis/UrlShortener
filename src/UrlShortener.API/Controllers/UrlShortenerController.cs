@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using UrlShortener.API.Models.Requests;
 using UrlShortener.API.Services;
+using UrlShortener.API.Services.Exceptions;
 
 namespace UrlShortener.API.Controllers
 {
@@ -19,10 +20,13 @@ namespace UrlShortener.API.Controllers
         public async Task<IActionResult> RedirectToOriginalUrl([FromRoute] string shortCode, CancellationToken cancellationToken)
         {
             var result = await _service.GetUrlDetails(shortCode, cancellationToken);
-            if (result == null || !result.IsActive)
+
+            if (result.ExpiresAt.HasValue && result.ExpiresAt < DateTime.UtcNow)
             {
-                return NotFound("URL not found or expired");
+               await _service.DeactivateUrlAsync(shortCode);
             }
+
+            await _service.RecordClickAsync(shortCode, Request.Headers["User-Agent"].ToString(), HttpContext.Connection.RemoteIpAddress?.ToString());
 
             return Redirect(result.OriginalUrl);
         }
