@@ -4,6 +4,7 @@ using UrlShortener.API.Models.Requests;
 namespace UrlShortener.API.Data.Repositories
 {
     using Cassandra;
+    using global::UrlShortener.API.Services.Exceptions;
 
     namespace UrlShortener.API.Data.Repositories
     {
@@ -48,15 +49,27 @@ namespace UrlShortener.API.Data.Repositories
 
             public async Task IncrementClickCounterAsync(string shortCode)
             {
-                var query = "UPDATE UrlClickCounters SET click_count = click_count + 1 WHERE short_code = ?";
-                await _session.ExecuteAsync(new SimpleStatement(query, shortCode));
-            }
+                var selectQuery = "SELECT click_count FROM ShortUrls WHERE short_code = ?";
+                var result = await _session.ExecuteAsync(new SimpleStatement(selectQuery, shortCode));
+                var row = result.FirstOrDefault();
 
-            public async Task InsertAnalyticsRecordAsync(string shortCode, DateTime clickDate, string userAgent, string ip)
-            {
-                var query = "INSERT INTO UrlClickAnalytics (short_code, clicked_at, user_agent, ip_address) VALUES (?, ?, ?, ?)";
-                await _session.ExecuteAsync(new SimpleStatement(query, shortCode, clickDate, userAgent, ip));
+                if (row == null)
+                {
+                    throw new NotFoundException("Short URL not found.");
+                }
+
+                var currentCount = row.GetValue<long>("click_count");
+                var newCount = currentCount + 1;
+
+                var updateQuery = "UPDATE ShortUrls SET click_count = ? WHERE short_code = ?";
+                await _session.ExecuteAsync(new SimpleStatement(updateQuery, newCount, shortCode));
             }
+            //public async Task IncrementClickCounterAsync(string shortCode)
+            //{
+            //    var query = "UPDATE ShortUrls SET click_count = click_count + 1 WHERE short_code = ?";
+            //    await _session.ExecuteAsync(new SimpleStatement(query, shortCode));  
+            //}
+            //34FOOl5
             //hjZpcxj
             //wtfQD16   exp
             public async Task Update(string shortCode,UpdateUrlRequest request, CancellationToken cancellationToken)
@@ -84,7 +97,7 @@ namespace UrlShortener.API.Data.Repositories
                         CreatedAt = row.GetValue<DateTime>("created_at"),
                         ExpiresAt = row.GetValue<DateTime?>("expires_at"),
                         IsActive = row.GetValue<bool>("is_active"),
-                        ClickCount = row.GetValue<int>("click_count")
+                        ClickCount = row.GetValue<long>("click_count")
                     };
             }
         }

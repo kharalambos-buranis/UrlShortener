@@ -4,6 +4,6 @@
     {
         public string OriginalUrl { get; set; }
         public DateTimeOffset? ExpiresAt { get; set; }
-        public string Alias { get; set; }
+        public string Alias { get; set; } 
     }
 }

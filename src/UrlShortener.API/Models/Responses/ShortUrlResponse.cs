@@ -1,6 +1,6 @@
-﻿namespace UrlShortener.API.Models.Entities
+﻿namespace UrlShortener.API.Models.Responses
 {
-    public class ShortUrl
+    public class ShortUrlResponse
     {
         public string ShortCode { get; set; }
         public string OriginalUrl { get; set; }
@@ -8,6 +8,6 @@
         public DateTimeOffset? ExpiresAt { get; set; }
         public long ClickCount { get; set; }
         public bool IsActive { get; set; }
-
+        public List<UrlClickAnalyticsResponse> Clicks { get; set; }
     }
 }

@@ -1,7 +1,10 @@
-﻿using UrlShortener.API.Models.Entities;
+﻿using Cassandra;
 using UrlShortener.API.Data.Repositories;
+using UrlShortener.API.Models.Entities;
 using UrlShortener.API.Models.Requests;
+using UrlShortener.API.Models.Responses;
 using UrlShortener.API.Services.Exceptions;
+
 
 namespace UrlShortener.API.Services
 {
@@ -12,19 +15,34 @@ namespace UrlShortener.API.Services
 
         private readonly Random _random = new();
         private readonly IShortUrlRepository _repository;
+        private readonly IUrlClickAnalyticsRepository _clickAnalyticsRepository;
 
-        public UrlShortenerService(IShortUrlRepository repository)
+        public UrlShortenerService(IShortUrlRepository repository, IUrlClickAnalyticsRepository clickAnalyticsRepository)
         {
             _repository = repository;
+            _clickAnalyticsRepository = clickAnalyticsRepository;
         }
 
         public async Task<ShortUrl> ShortenUrl(ShortenUrlRequest request, CancellationToken cancellationToken)
         {
-            var shortUrl = new ShortUrl 
+            var shortCode = string.IsNullOrWhiteSpace(request.Alias)
+                ? GenerateShortCode()
+                : request.Alias;
+
+            if (!string.IsNullOrWhiteSpace(request.Alias))
             {
-                ShortCode = GenerateShortCode(),
+                var existing = await _repository.GetSingle(shortCode, cancellationToken);
+                if (existing != null)
+                {
+                    throw new ConflictException("The alias is already in use.");
+                }
+            }
+
+            var shortUrl = new ShortUrl
+            {
+                ShortCode = shortCode,
                 OriginalUrl = request.OriginalUrl,
-                CreatedAt = DateTimeOffset.Now,
+                CreatedAt = DateTimeOffset.UtcNow,
                 ExpiresAt = request.ExpiresAt,
                 ClickCount = 0,
                 IsActive = true
@@ -36,7 +54,7 @@ namespace UrlShortener.API.Services
         }
 
 
-        public async Task<ShortUrl> GetUrlDetails(string shortCode, CancellationToken cancellationToken)
+        public async Task<ShortUrlResponse> GetUrlDetails(string shortCode, CancellationToken cancellationToken)
         {
             var shortUrl = await _repository.GetSingle(shortCode, cancellationToken);
 
@@ -45,7 +63,18 @@ namespace UrlShortener.API.Services
                 throw new NotFoundException("The URL not found");
             }
 
-            return shortUrl;
+            var analytics = await _clickAnalyticsRepository.Get(shortCode);
+
+            return new ShortUrlResponse
+            {
+                ShortCode = shortUrl.ShortCode,
+                OriginalUrl = shortUrl.OriginalUrl,
+                CreatedAt = shortUrl.CreatedAt,
+                ExpiresAt = shortUrl.ExpiresAt,
+                ClickCount = shortUrl.ClickCount,
+                IsActive = shortUrl.IsActive,
+                Clicks = analytics.ToList()
+            };
         }
 
         public async Task DeactivateUrlAsync(string shortCode)
@@ -58,7 +87,7 @@ namespace UrlShortener.API.Services
         public async Task RecordClickAsync(string shortCode, string userAgent, string ipAddress)
         {
             await _repository.IncrementClickCounterAsync(shortCode);
-            await _repository.InsertAnalyticsRecordAsync(shortCode, DateTime.UtcNow, userAgent, ipAddress);
+            await _clickAnalyticsRepository.Insert(shortCode, DateTime.UtcNow, userAgent, ipAddress);
         }
 
         public async Task UpdateUrl(string shortCode,UpdateUrlRequest request, CancellationToken cancellationToken)

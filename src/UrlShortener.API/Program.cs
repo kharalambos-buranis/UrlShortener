@@ -1,9 +1,11 @@
 using Cassandra;
+using FluentValidation;
 using UrlShortener.API.Data;
 using UrlShortener.API.Data.Repositories;
 using UrlShortener.API.Data.Repositories.UrlShortener.API.Data.Repositories;
 using UrlShortener.API.Middlewares;
 using UrlShortener.API.Services;
+using UrlShortener.API.Services.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,10 +31,15 @@ builder.Services.AddScoped(_ =>
 
 builder.Services.AddScoped<IUrlShortenerService, UrlShortenerService>();
 builder.Services.AddScoped<IShortUrlRepository, ShortUrlRepository>();
+builder.Services.AddScoped<IUrlClickAnalyticsRepository, UrlClickAnalyticsReposiotry>();
 
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
 
 builder.Services.AddControllers();
+
+builder.Services.AddValidatorsFromAssemblyContaining<ShortenUrlRequestValidator>();
+builder.Services.AddFluentValidationAutoValidation();
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -48,9 +55,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+app.UseAuthorization();
 
 app.MapControllers();
 

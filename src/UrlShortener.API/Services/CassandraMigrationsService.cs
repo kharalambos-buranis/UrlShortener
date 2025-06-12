@@ -17,7 +17,7 @@
                  original_url text,
                  created_at timestamp,
                  expires_at timestamp,
-                 click_count int,
+                 click_count bigint,
                  is_active boolean
              );
          ");
@@ -32,12 +32,12 @@
              ) WITH CLUSTERING ORDER BY (clicked_at DESC);
          ");
 
-            _session.Execute(@"
-        CREATE TABLE IF NOT EXISTS UrlClickCounters (
-            short_code text PRIMARY KEY,
-            click_count counter
-             );
-        ");
+        //    _session.Execute(@"
+        //CREATE TABLE IF NOT EXISTS UrlClickCounters (
+        //    short_code text PRIMARY KEY,
+        //    click_count counter
+        //     );
+        //");
         }
     }
 }
