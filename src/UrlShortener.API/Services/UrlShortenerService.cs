@@ -84,6 +84,16 @@ namespace UrlShortener.API.Services
             throw new NotFoundException("This URL has expired");
         }
 
+        public async Task DeactivateExpiredUrlsAsync(CancellationToken cancellationToken)
+        {
+            var expiredUrls = await _repository.GetExpiredUrlsAsync(cancellationToken);
+
+            foreach (var url in expiredUrls)
+            {
+                await _repository.SetUrlInactiveAsync(url.ShortCode, cancellationToken);
+            }
+        }
+
         public async Task RecordClickAsync(string shortCode, string userAgent, string ipAddress)
         {
             await _repository.IncrementClickCounterAsync(shortCode);

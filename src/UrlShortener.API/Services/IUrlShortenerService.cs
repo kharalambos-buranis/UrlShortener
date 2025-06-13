@@ -12,6 +12,6 @@ namespace UrlShortener.API.Services
         Task DeleteUrl(string shortCode, CancellationToken cancellationToken);
         Task DeactivateUrlAsync(string shortCode);
         Task RecordClickAsync(string shortCode, string userAgent, string ipAddress);
-
+        public Task DeactivateExpiredUrlsAsync(CancellationToken cancellationToken);
     }
 }

@@ -1,5 +1,7 @@
 using Cassandra;
 using FluentValidation;
+using FluentValidation.AspNetCore;
+using UrlShortener.API.BackgroundServices;
 using UrlShortener.API.Data;
 using UrlShortener.API.Data.Repositories;
 using UrlShortener.API.Data.Repositories.UrlShortener.API.Data.Repositories;
@@ -43,6 +45,11 @@ builder.Services.AddFluentValidationAutoValidation();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddValidatorsFromAssemblyContaining<ShortenUrlRequestValidator>();
+builder.Services.AddFluentValidationAutoValidation();
+
+builder.Services.AddHostedService<InactivateExpiredUrlService>();
 
 var app = builder.Build();
 

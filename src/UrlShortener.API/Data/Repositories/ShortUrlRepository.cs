@@ -64,11 +64,7 @@ namespace UrlShortener.API.Data.Repositories
                 var updateQuery = "UPDATE ShortUrls SET click_count = ? WHERE short_code = ?";
                 await _session.ExecuteAsync(new SimpleStatement(updateQuery, newCount, shortCode));
             }
-            //public async Task IncrementClickCounterAsync(string shortCode)
-            //{
-            //    var query = "UPDATE ShortUrls SET click_count = click_count + 1 WHERE short_code = ?";
-            //    await _session.ExecuteAsync(new SimpleStatement(query, shortCode));  
-            //}
+           
             //34FOOl5
             //hjZpcxj
             //wtfQD16   exp
@@ -84,6 +80,21 @@ namespace UrlShortener.API.Data.Repositories
                 var preparedStatement = await _session.PrepareAsync("DELETE FROM ShortUrls WHERE short_code = ?");
 
                 await _session.ExecuteAsync(preparedStatement.Bind(shortCode));
+            }
+
+            public async Task<IEnumerable<ShortUrl>> GetExpiredUrlsAsync(CancellationToken cancellationToken)
+            {
+                var query = "SELECT * FROM ShortUrls WHERE expires_at < toTimestamp(now()) AND is_active = true ALLOW FILTERING";
+
+                var result = await _session.ExecuteAsync(new SimpleStatement(query));
+
+                return result.Select(MapRowToShortUrl);
+            }
+
+            public async Task SetUrlInactiveAsync(string shortCode, CancellationToken cancellationToken)
+            {
+                var query = "UPDATE ShortUrls SET is_active = false WHERE short_code = ?";
+                await _session.ExecuteAsync(new SimpleStatement(query, shortCode));
             }
 
             private ShortUrl? MapRowToShortUrl(Row? row)

@@ -30,7 +30,6 @@ namespace UrlShortener.API.Data.Repositories
 
             return rowset.Select(row => new UrlClickAnalyticsResponse
             {
-                //ShortCode = row.GetValue<string>("short_code"),
                 ClickedAt = row.GetValue<DateTime>("clicked_at"),
                 UserAgent = row.GetValue<string>("user_agent"),
                 IpAddress = row.GetValue<string>("ip_address")

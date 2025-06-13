@@ -11,5 +11,8 @@ namespace UrlShortener.API.Data.Repositories
         Task Update(string shortCode,UpdateUrlRequest request, CancellationToken cancellationToken);
         Task IncrementClickCounterAsync(string shortCode);
         Task SetUrlInactiveAsync(string shortCode);
+        public Task<IEnumerable<ShortUrl>> GetExpiredUrlsAsync(CancellationToken cancellationToken);
+        public Task SetUrlInactiveAsync(string shortCode, CancellationToken cancellationToken);
+
     }
 }
