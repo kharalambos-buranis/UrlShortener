@@ -43,8 +43,13 @@ namespace UrlShortener.API.Data.Repositories
             
             public async Task SetUrlInactiveAsync(string shortCode)
             {
-                var query = "UPDATE ShortUrls SET is_active = false WHERE short_code = ?";
-                await _session.ExecuteAsync(new SimpleStatement(query, shortCode));
+                var preparedStatement = await _session.PrepareAsync(
+                    "UPDATE ShortUrls SET is_active = false WHERE short_code = ?"
+                );
+
+                var boundStatement = preparedStatement.Bind(shortCode);
+
+                await _session.ExecuteAsync(boundStatement);
             }
 
             public async Task IncrementClickCounterAsync(string shortCode)
@@ -65,9 +70,6 @@ namespace UrlShortener.API.Data.Repositories
                 await _session.ExecuteAsync(new SimpleStatement(updateQuery, newCount, shortCode));
             }
            
-            //34FOOl5
-            //hjZpcxj
-            //wtfQD16   exp
             public async Task Update(string shortCode,UpdateUrlRequest request, CancellationToken cancellationToken)
             {
                 var preparedStatement = await _session.PrepareAsync("UPDATE ShortUrls SET original_url = ?, expires_at = ? WHERE short_code = ?");

@@ -6,7 +6,7 @@ namespace UrlShortener.API.BackgroundServices
     {
         private readonly ILogger<InactivateExpiredUrlService> _logger;
         private readonly IServiceProvider _serviceProvider;
-        private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan Interval = TimeSpan.FromMinutes(30);
 
         public InactivateExpiredUrlService(
             IServiceProvider serviceProvider,

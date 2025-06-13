@@ -32,12 +32,6 @@
              ) WITH CLUSTERING ORDER BY (clicked_at DESC);
          ");
 
-        //    _session.Execute(@"
-        //CREATE TABLE IF NOT EXISTS UrlClickCounters (
-        //    short_code text PRIMARY KEY,
-        //    click_count counter
-        //     );
-        //");
         }
     }
 }
